@@ -1,0 +1,35 @@
+{
+  "canisters": {
+    "apparel_backend": {
+      "main": "src/apparel_backend/main.mo",
+      "type": "motoko"
+    },
+    "apparel_frontend": {
+      "dependencies": [
+        "apparel_backend"
+      ],
+      "frontend": {
+        "entrypoint": "src/apparel_frontend/src/index.html"
+      },
+      "source": [
+        "src/apparel_frontend/assets",
+        "dist/apparel_frontend/"
+      ],
+      "type": "assets"
+    }
+  },
+  "declarations": {
+    "output": "src/declarations",
+    "capabilities": [
+      "nodejs"
+    ]
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

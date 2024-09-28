@@ -1,0 +1,237 @@
+import Debug "mo:base/Debug";
+import Text "mo:base/Text";
+import Bool "mo:base/Bool";
+import Map "mo:base/HashMap";
+import Error "mo:base/Error";
+import Time "mo:base/Time";
+import List "mo:base/List";
+import Iter "mo:base/Iter";
+import HashMap "mo:base/HashMap";
+import Principal "mo:base/Principal";
+import Option "mo:base/Option";
+import Result "mo:base/Result";
+import Int "mo:base/Int";
+
+actor ChainApparel {
+  type MaterialDataBlock = {
+    Material : Text;
+    Quantity : Text;
+    OrderDate : Text;
+    RequiredOrderDate : Text;
+  };
+  type Result = {
+    #ok : MaterialOrder;
+    #err : Text;
+  };
+
+  public type MaterialOrder = {
+    OrderId : Text;
+    Status : Text;
+    OrderDate : Int;
+    MaterialData : [MaterialDataBlock];
+    Accept : Bool;
+    Reject : Bool;
+    AcceptanceDate : Int;
+    RejectanceDate : Int;
+    Shipment : Bool;
+    ShipmentDate : Int;
+    Confirmation : Bool;
+    ConfirmationDate : Int;
+  };
+
+  private stable var mapEntries : [(Text, MaterialOrder)] = [];
+  var map = Map.HashMap<Text, MaterialOrder>(0, Text.equal, Text.hash);
+
+  public func CreateOrder(orderId : Text, materail : [MaterialDataBlock]) : async (Text) {
+    switch (map.get(orderId)) {
+      case (?value) {
+        return "order allready exist";
+      };
+      case (null) {
+        let ord : MaterialOrder = {
+          OrderId = orderId;
+          OrderDate = Time.now();
+          MaterialData = materail;
+          Status = "Created";
+          Accept = false;
+          Reject = false;
+          AcceptanceDate = 0;
+          RejectanceDate = 0;
+          Shipment = false;
+          ShipmentDate = 0;
+          Confirmation = false;
+          ConfirmationDate = 0;
+        };
+        map.put(orderId, ord);
+        return "created";
+      };
+    };
+
+  };
+
+  public shared query func QueryOrder(id : Text) : async ?MaterialOrder {
+    Debug.print(debug_show (map.get(id)));
+    map.get(id);
+
+  };
+  public query func QueryIAllOrders() : async [(Text, MaterialOrder)] {
+    var tempArray : [(Text, MaterialOrder)] = [];
+    tempArray := Iter.toArray(map.entries());
+
+    return tempArray;
+  };
+  public func AcceptOrder(id : Text) : async Text {
+
+    var ord = map.get(id);
+    switch (ord) {
+      case (?ord) {
+        if (ord.Accept == false) {
+          let response = await accept_Order(ord);
+          return "aceepted";
+        } else {
+          return Text.concat("order allready", ord.Status);
+        };
+      };
+      case (null) { return "order not existed" };
+    };
+  };
+
+  func accept_Order(order : MaterialOrder) : async () {
+    let ord : MaterialOrder = {
+      OrderId = order.OrderId;
+      OrderDate = order.OrderDate;
+      MaterialData = order.MaterialData;
+      Accept = true;
+      Reject = order.Reject;
+      Status = "Accepted";
+      AcceptanceDate = Time.now();
+      RejectanceDate = order.RejectanceDate;
+      Shipment = order.Shipment;
+      ShipmentDate = order.ShipmentDate;
+      Confirmation = order.Confirmation;
+      ConfirmationDate = order.ConfirmationDate;
+    };
+
+    let data = map.put(order.OrderId, ord);
+    return ();
+  };
+
+  public func RejectOrder(id : Text) : async Text {
+
+    var ord = map.get(id);
+
+    switch (ord) {
+      case (?ord) {
+        if (ord.Reject == false and ord.Accept == false and ord.Shipment == false and ord.Confirmation == false) {
+          let response = await reject_Order(ord);
+          return "rejected";
+        } else {
+          return Text.concat("order allready", ord.Status);
+        };
+
+      };
+      case (null) { return "order not existed" };
+    };
+  };
+
+  func reject_Order(order : MaterialOrder) : async () {
+    let ord : MaterialOrder = {
+      OrderId = order.OrderId;
+      OrderDate = order.OrderDate;
+      MaterialData = order.MaterialData;
+      Accept = order.Accept;
+      Status = "Rejected";
+      Reject = true;
+      AcceptanceDate = order.AcceptanceDate;
+      RejectanceDate = Time.now();
+      Shipment = order.Shipment;
+      ShipmentDate = order.ShipmentDate;
+      Confirmation = order.Confirmation;
+      ConfirmationDate = order.ConfirmationDate;
+    };
+
+    let data = map.put(order.OrderId, ord);
+    return ();
+  };
+
+  public func ShipmentOrder(id : Text) : async Text {
+
+    var ord = map.get(id);
+    switch (ord) {
+      case (?ord) {
+        if ((ord.Reject == true or ord.Accept == true) and ord.Shipment == false and ord.Confirmation == false) {
+          let response = await shipment_Order(ord);
+          return "shped";
+        } else {
+          return Text.concat("order allready", ord.Status);
+        };
+
+      };
+      case (null) { return "order not existed" };
+    };
+  };
+
+  func shipment_Order(order : MaterialOrder) : async () {
+    let ord : MaterialOrder = {
+      OrderId = order.OrderId;
+      OrderDate = order.OrderDate;
+      MaterialData = order.MaterialData;
+      Accept = order.Accept;
+      Status = "Shiped";
+      Reject = order.Reject;
+      AcceptanceDate = order.AcceptanceDate;
+      RejectanceDate = order.RejectanceDate;
+      Shipment = true;
+      ShipmentDate = Time.now();
+      Confirmation = order.Confirmation;
+      ConfirmationDate = order.ConfirmationDate;
+    };
+
+    let data = map.put(order.OrderId, ord);
+    return ();
+  };
+  public func ConfirmationOrder(id : Text) : async Text {
+
+    var ord = map.get(id);
+    switch (ord) {
+      case (?ord) {
+        if ((ord.Reject == true or ord.Accept == true) and ord.Shipment == true and ord.Confirmation == false) {
+          let response = await confirmation_Order(ord);
+          return "confirmed";
+        } else {
+          return Text.concat("order allready", ord.Status);
+        };
+
+      };
+      case (null) { return "order not existed" };
+    };
+  };
+
+  func confirmation_Order(order : MaterialOrder) : async () {
+    let ord : MaterialOrder = {
+      OrderId = order.OrderId;
+      OrderDate = order.OrderDate;
+      MaterialData = order.MaterialData;
+      Accept = order.Accept;
+      Status = "Confirmed";
+      Reject = order.Reject;
+      AcceptanceDate = order.AcceptanceDate;
+      RejectanceDate = order.RejectanceDate;
+      Shipment = order.Shipment;
+      ShipmentDate = order.ShipmentDate;
+      Confirmation = true;
+      ConfirmationDate = Time.now();
+    };
+
+    let data = map.put(order.OrderId, ord);
+    return ();
+  };
+
+  system func preupgrade() {
+    mapEntries := Iter.toArray(map.entries());
+  };
+  system func postupgrade() {
+    map := HashMap.fromIter<Text, MaterialOrder>(mapEntries.vals(), 1, Text.equal, Text.hash);
+
+  };
+};

@@ -1,0 +1,6 @@
+{
+  "index": { "fields": ["VendorID"] },
+  "ddoc": "indexVendorID",
+  "name": "indexVendorID",
+  "type": "json"
+}

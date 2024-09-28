@@ -1,0 +1,5 @@
+{
+  "index": { "fields": ["Type", "VendorEmailHash"] },
+  "name": "indexVendorEmailHash",
+  "type": "json"
+}
